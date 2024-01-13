@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 
 const User = schema.User;
 const Mandali = schema.Mandali;
-const Installment = schema.Installment;
 const PendingInstallment = schema.Pending_installment;
 const Stock = schema.Stock;
 const Realized = schema.Realized;
