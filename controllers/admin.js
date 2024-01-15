@@ -313,10 +313,13 @@ let read_dashboard = async function (req, res) {
       ]),
     ]);
 
-    data.TotalInvestment = installment_detail[0].Total;
-    data.TotalMember = user_detail[0].total_member;
-    data.TotalAccount = user_detail[0].total_account;
-    data.TotalPenalty = penalty_detail[0].total_penalty;
+    data.TotalInvestment =
+      installment_detail.length > 0 ? installment_detail[0].Total : 0;
+    data.TotalMember = user_detail.length > 0 ? user_detail[0].total_member : 0;
+    data.TotalAccount =
+      user_detail.length > 0 ? user_detail[0].total_account : 0;
+    data.TotalPenalty =
+      penalty_detail.length > 0 ? penalty_detail[0].total_penalty : 0;
 
     let investment_calculation = await calculate_current_investment(body);
     data.CurrentInvestment = investment_calculation.current_investment;
