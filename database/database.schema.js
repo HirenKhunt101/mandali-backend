@@ -133,19 +133,6 @@ const Stock_Schema = new Schema(
 );
 module.exports.Stock = mongoose.model("Stock", Stock_Schema);
 
-const Transaction_Schema = new Schema(
-  {
-    StockId: {
-      type: "ObjectId",
-      ref: "Stock",
-    },
-    Quantity: Number,
-    Amount: Number,
-  },
-  { timestamps: true }
-);
-module.exports.Transaction = mongoose.model("Transaction", Transaction_Schema);
-
 const Realized_Schema = new Schema(
   {
     Transaction: [
