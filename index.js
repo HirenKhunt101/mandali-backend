@@ -11,7 +11,7 @@ const mongo = require("./database/database.service");
 // Use the cors middleware
 app.use(
   cors({
-    origin: ["https://mandali-frontend.vercel.app", "http://localhost:4200"], // Replace with the actual origin of your Angular app
+    origin: "https://mandali-frontend.vercel.app", // Replace with the actual origin of your Angular app
     credentials: true,
   })
 );
