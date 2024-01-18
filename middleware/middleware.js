@@ -2,11 +2,11 @@ let mongo = require("../database/database.service");
 let schema = require("../database/database.schema");
 let jwt = require("jsonwebtoken");
 
-let User = schema.user;
+let User = schema.User;
 
 let user_authentication = async function (req, res, next) {
   let body = req.body;
-  if (!req.cookies.Token) {
+  if (!req.cookies || !req.cookies.Token) {
     return res.status(401).json({
       statusMessage: "Authentication token expired, please login again",
     });
@@ -26,11 +26,11 @@ let user_authentication = async function (req, res, next) {
         secure: true,
       });
 
-      User.updateOne(
-        { _id: decode.ClientId },
-        { "AuthToken.UpdatedAt": Date.now() },
-        (err, res) => {}
-      );
+      // User.updateOne(
+      //   { _id: decode.ClientId },
+      //   { "AuthToken.UpdatedAt": Date.now() },
+      //   (err, res) => {}
+      // );
       next();
     } else {
       if (err.name == "JsonWebTokenError") {

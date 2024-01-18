@@ -13,7 +13,7 @@ const suggestion = require("./suggestion");
 
 router.use("/user", user);
 
-// router.use(middleware.user_authentication); // apply middleware on subsequence routes
+router.use(middleware.user_authentication); // apply middleware on subsequence routes
 
 router.use("/admin", admin);
 router.use("/property", property);

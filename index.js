@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const cookieParser = require("cookie-parser");
 
 const port = process.env.APP_PORT;
 const schema = require("./database/database.schema");
@@ -10,12 +11,13 @@ const mongo = require("./database/database.service");
 // Use the cors middleware
 app.use(
   cors({
-    origin: "https://mandali-frontend.vercel.app", // Replace with the actual origin of your Angular app
+    origin: "http://localhost:4200", // Replace with the actual origin of your Angular app
     credentials: true,
   })
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 const indexRouter = require("./routes/index");
 app.use("/mandali", indexRouter);
