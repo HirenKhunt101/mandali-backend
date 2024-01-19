@@ -10,8 +10,10 @@ const holding = require("./holding");
 const realized = require("./realized");
 const activity = require("./activity");
 const suggestion = require("./suggestion");
+const migration = require("./migration");
 
 router.use("/user", user);
+router.use("/migration", migration);
 
 // router.use(middleware.user_authentication); // apply middleware on subsequence routes
 
