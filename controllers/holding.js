@@ -9,6 +9,7 @@ const PendingInstallment = schema.Pending_installment;
 const Stock = schema.Stock;
 const Realized = schema.Realized;
 const Activity = schema.Activity;
+const Charge = schema.Charge;
 
 let buy_stock = async function (req, res) {
   let body = req.body;
@@ -17,9 +18,12 @@ let buy_stock = async function (req, res) {
     // let stock_detail = new Stock(body);
     // await stock_detail.save();
 
+    let charge_details = new Charge(body.Charges);
+
     let transaction = {
       Amount: body.Amount,
       Quantity: body.Quantity,
+      ChargeId: charge_details._id,
       Date: new Date(body.Date),
     };
 
@@ -46,6 +50,7 @@ let buy_stock = async function (req, res) {
         { upsert: true }
       ),
       activity_details.save(),
+      charge_details.save(),
     ]);
 
     return res.status(201).json({
@@ -170,8 +175,6 @@ let read_stock = async function (req, res) {
       }
     });
 
-    console.log(data.all_stock_detail);
-
     return res.status(201).json({
       statusMessage: "Read stocks successfully",
       success: true,
@@ -194,10 +197,12 @@ let sell_stock = async function (req, res) {
     // let stock_detail = new Realized(body);
     // await stock_detail.save();
 
+    let charge_details = new Charge(body.Charges);
+
     let transaction = {
       Amount: body.SellingPrice,
       Quantity: body.SellingQuantity,
-      Charge: body.SellingCharge,
+      ChargeId: charge_details._id,
       Date: new Date(),
     };
     let activity_details = new Activity();
@@ -223,6 +228,7 @@ let sell_stock = async function (req, res) {
         { upsert: true }
       ),
       activity_details.save(),
+      charge_details.save(),
     ]);
 
     return res.status(201).json({

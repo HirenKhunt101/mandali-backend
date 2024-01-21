@@ -117,10 +117,15 @@ const Stock_Schema = new Schema(
   {
     Transaction: [
       {
-        type: Object,
+        Amount: Number,
+        Quantity: Number,
+        Date: Date,
+        ChargeId: {
+          type: "ObjectId",
+          ref: "Charge",
+        },
       },
     ],
-    Date: Date,
     Exchange: String,
     Symbol: String,
     StockName: String,
@@ -132,6 +137,21 @@ const Stock_Schema = new Schema(
   { timestamps: true }
 );
 module.exports.Stock = mongoose.model("Stock", Stock_Schema);
+
+const Charge_Schema = new Schema(
+  {
+    Brokerage: Number,
+    STT: Number,
+    TransactionCharge: Number,
+    TurnoverTax: Number,
+    SEBICharges: Number,
+    StampDuty: Number,
+    GST: Number,
+    OtherCharges: Number,
+  },
+  { timestamps: true }
+);
+module.exports.Charge = mongoose.model("Charge", Charge_Schema);
 
 const Realized_Schema = new Schema(
   {
