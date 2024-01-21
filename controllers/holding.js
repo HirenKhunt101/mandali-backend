@@ -175,8 +175,6 @@ let read_stock = async function (req, res) {
       }
     });
 
-    console.log(data.all_stock_detail);
-
     return res.status(201).json({
       statusMessage: "Read stocks successfully",
       success: true,
