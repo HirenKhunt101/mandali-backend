@@ -5,6 +5,10 @@ const installment = require("../controllers/installment");
 router.post("/create_installment", installment.create_installment);
 router.post("/read_installment", installment.read_installment);
 router.post(
+  "/read_remaining_installment",
+  installment.read_remaining_installment
+);
+router.post(
   "/approve_delete_pending_request",
   installment.approve_delete_pending_request
 );

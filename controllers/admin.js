@@ -53,95 +53,123 @@ let read_user = async function (req, res) {
   let body = req.body;
   let data = {};
   try {
-    data.UserDetails = await User.aggregate([
-      {
-        $match: {
-          MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
-        },
-      },
-      {
-        $lookup: {
-          from: "installments",
-          localField: "_id",
-          foreignField: "UserId",
-          as: "installment_detail",
-        },
-      },
-      {
-        $unwind: {
-          path: "$installment_detail",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          Username: {
-            $first: "$Username",
-          },
-          ContactNumber: {
-            $first: "$ContactNumber",
-          },
-          Email: {
-            $first: "$Email",
-          },
-          NoOfAccount: {
-            $first: "$NoOfAccount",
-          },
-          TotalInvestment: {
-            $sum: { $ifNull: ["$installment_detail.Amount", 0] },
-          },
-          createdAt: {
-            $first: "$createdAt",
+    [data.UserDetails, data.RemainingInstallment] = await Promise.all([
+      User.aggregate([
+        {
+          $match: {
+            MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
           },
         },
-      },
-      {
-        $lookup: {
-          from: "penalties",
-          localField: "_id",
-          foreignField: "UserId",
-          as: "penalty_detail",
-        },
-      },
-      {
-        $unwind: {
-          path: "$penalty_detail",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          Username: {
-            $first: "$Username",
-          },
-          ContactNumber: {
-            $first: "$ContactNumber",
-          },
-          Email: {
-            $first: "$Email",
-          },
-          NoOfAccount: {
-            $first: "$NoOfAccount",
-          },
-          TotalInvestment: {
-            $first: "$TotalInvestment",
-          },
-          TotalPenalty: {
-            $sum: { $ifNull: ["$penalty_detail.Amount", 0] },
-          },
-          createdAt: {
-            $first: "$createdAt",
+        {
+          $lookup: {
+            from: "installments",
+            localField: "MandaliId",
+            foreignField: "MandaliId",
+            as: "installment_detail",
           },
         },
-      },
-      {
-        $sort: {
-          createdAt: 1,
+        {
+          $unwind: {
+            path: "$installment_detail",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
+        {
+          $group: {
+            _id: "$_id",
+            Username: {
+              $first: "$Username",
+            },
+            ContactNumber: {
+              $first: "$ContactNumber",
+            },
+            Email: {
+              $first: "$Email",
+            },
+            NoOfAccount: {
+              $first: "$NoOfAccount",
+            },
+            TotalInvestment: {
+              $sum: {
+                $multiply: ["$NoOfAccount", "$installment_detail.Amount"],
+              },
+            },
+            createdAt: {
+              $first: "$createdAt",
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "penalties",
+            localField: "_id",
+            foreignField: "UserId",
+            as: "penalty_detail",
+          },
+        },
+        {
+          $unwind: {
+            path: "$penalty_detail",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            Username: {
+              $first: "$Username",
+            },
+            ContactNumber: {
+              $first: "$ContactNumber",
+            },
+            Email: {
+              $first: "$Email",
+            },
+            NoOfAccount: {
+              $first: "$NoOfAccount",
+            },
+            TotalInvestment: {
+              $first: "$TotalInvestment",
+            },
+            TotalPenalty: {
+              $sum: { $ifNull: ["$penalty_detail.Amount", 0] },
+            },
+            createdAt: {
+              $first: "$createdAt",
+            },
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+      ]),
+      Installment.aggregate([
+        {
+          $match: {
+            MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
+          },
+        },
+        {
+          $unwind: {
+            path: "$Remaining_users",
+          },
+        },
+      ]),
     ]);
+
+    for (let i = 0; i < data.UserDetails.length; i++) {
+      for (let j = 0; j < data.RemainingInstallment.length; j++) {
+        if (
+          data.UserDetails[i]._id.toString() ==
+          data.RemainingInstallment[j].Remaining_users.toString()
+        ) {
+          data.UserDetails[i].TotalInvestment -=
+            data.RemainingInstallment[j].Amount;
+        }
+      }
+    }
 
     data.TotalAccount = data.UserDetails.reduce(
       (acc, cur) => acc + (cur.NoOfAccount ? cur.NoOfAccount : 0),
@@ -258,12 +286,13 @@ let calculate_current_investment = async function (body) {
   }
 };
 
-let read_dashboard = async function (req, res) {
-  let body = req.body;
-  let data = {};
+let calculate_installment = async function (body) {
+  let data = {
+    TotalInstallment: 0,
+  };
   try {
-    let [installment_detail, user_detail, penalty_detail] = await Promise.all([
-      Installment.aggregate([
+    let [total_account, installment_detail] = await Promise.all([
+      User.aggregate([
         {
           $match: {
             MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
@@ -271,13 +300,86 @@ let read_dashboard = async function (req, res) {
         },
         {
           $group: {
-            _id: "$MandaliId",
-            Total: {
-              $sum: "$Amount",
+            _id: "",
+            NoOfAccount: {
+              $sum: "$NoOfAccount",
             },
           },
         },
       ]),
+      Installment.aggregate([
+        {
+          $match: {
+            MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+      ]),
+    ]);
+
+    let totalAccount =
+      total_account.length > 0 ? total_account[0].NoOfAccount : 0;
+    for (let d of installment_detail) {
+      let Total = d.Amount * totalAccount;
+
+      let pending_installment = await Installment.aggregate([
+        {
+          $match: {
+            _id: d._id,
+          },
+        },
+        {
+          $unwind: {
+            path: "$Remaining_users",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "Remaining_users",
+            foreignField: "_id",
+            as: "user_detail",
+          },
+        },
+        {
+          $unwind: {
+            path: "$user_detail",
+          },
+        },
+        {
+          $group: {
+            _id: "",
+            RemainingAmount: {
+              $sum: {
+                $multiply: ["$Amount", "$user_detail.NoOfAccount"],
+              },
+            },
+          },
+        },
+      ]);
+
+      let Remaining =
+        pending_installment.length > 0
+          ? pending_installment[0].RemainingAmount
+          : 0;
+      data.TotalInstallment += Total - Remaining;
+    }
+
+    return data;
+  } catch (error) {
+    console.log(`Error in catch : ${error}`);
+  }
+};
+
+let read_dashboard = async function (req, res) {
+  let body = req.body;
+  let data = {};
+  try {
+    let [user_detail, penalty_detail] = await Promise.all([
       User.aggregate([
         {
           $match: {
@@ -296,25 +398,42 @@ let read_dashboard = async function (req, res) {
           },
         },
       ]),
-      Penalty.aggregate([
+      User.aggregate([
         {
           $match: {
             MandaliId: new mongoose.Types.ObjectId(body.MandaliId),
           },
         },
         {
+          $lookup: {
+            from: "penalties",
+            localField: "_id",
+            foreignField: "UserId",
+            as: "penalty",
+          },
+        },
+        {
+          $unwind: {
+            path: "$penalty",
+          },
+        },
+        {
           $group: {
-            _id: "$MandaliId",
+            _id: "",
             total_penalty: {
-              $sum: "$Amount",
+              $sum: "$penalty.Amount",
             },
           },
         },
       ]),
     ]);
 
-    data.TotalInvestment =
-      installment_detail.length > 0 ? installment_detail[0].Total : 0;
+    let installment_detail = await calculate_installment({
+      MandaliId: body.MandaliId,
+    });
+    data.TotalInvestment = installment_detail.TotalInstallment
+      ? installment_detail.TotalInstallment
+      : 0;
     data.TotalMember = user_detail.length > 0 ? user_detail[0].total_member : 0;
     data.TotalAccount =
       user_detail.length > 0 ? user_detail[0].total_account : 0;
