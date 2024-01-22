@@ -60,11 +60,14 @@ module.exports.User = mongoose.model("User", User_Schema);
 
 const Installment_Schema = new Schema(
   {
-    Date: Date,
-    UserId: {
-      type: "ObjectId",
-      ref: "User",
-    },
+    Month: Number,
+    Year: Number,
+    Remaining_users: [
+      {
+        type: "ObjectId",
+        ref: "User",
+      },
+    ],
     Amount: Number,
     MandaliId: {
       type: "ObjectId",
@@ -98,16 +101,13 @@ module.exports.Pending_installment = mongoose.model(
 
 const Penalty_Schema = new Schema(
   {
-    Date: Date,
+    Month: Number,
+    Year: Number,
     UserId: {
       type: "ObjectId",
       ref: "User",
     },
     Amount: Number,
-    MandaliId: {
-      type: "ObjectId",
-      ref: "Mandali",
-    },
   },
   { timestamps: true }
 );
