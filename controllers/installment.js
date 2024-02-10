@@ -314,10 +314,13 @@ let approve_delete_pending_request = async function (req, res) {
       transactionType: "Installment",
     };
 
-    await Installment.updateOne(
-      { _id: bodyData._id },
-      { $pull: { Remaining_users: bodyData.UserId } }
-    );
+    await Promise.all([
+      activity_details.save(),
+      Installment.updateOne(
+        { _id: bodyData._id },
+        { $pull: { Remaining_users: bodyData.UserId } }
+      ),
+    ]);
 
     return res.status(201).json({
       statusMessage: "Approve transaction successfully",
